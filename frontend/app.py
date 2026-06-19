@@ -13,7 +13,11 @@ from api_calls import (
     get_authority_analytics,
     update_complaint_department,
 )
-
+def get_error_message(response, default_message):
+    try:
+        return response.json().get("detail", default_message)
+    except Exception:
+        return response.text or default_message
 def apply_theme():
     st.markdown(
         """
@@ -110,7 +114,7 @@ def show_citizen_register():
         if response.status_code == 200:
             st.success("Registration successful. Please login now.")
         else:
-            st.error(response.json().get("detail", "Registration failed"))
+            st.error(get_error_message(response, "Registration failed"))
 
 
 def show_citizen_login():
@@ -137,8 +141,7 @@ def show_citizen_login():
             st.success("Login successful")
             citizen_dashboard()
         else:
-            st.error(response.json().get("detail", "Login failed"))
-
+            st.error(get_error_message(response, "Login failed"))
 
 def citizen_dashboard():
     st.subheader("Citizen Dashboard")
@@ -182,8 +185,7 @@ def citizen_dashboard():
                 st.success("Complaint submitted successfully")
                 st.json(response.json())
             else:
-                st.error(response.json().get("detail", "Complaint submission failed"))
-
+                st.error(get_error_message(response, "Complaint submission failed"))
     elif st.session_state.citizen_dashboard_option == "my_complaints":
         response = get_my_complaints(st.session_state.citizen_token)
 
@@ -247,7 +249,7 @@ def show_authority_register():
         if response.status_code == 200:
             st.success("Registration successful. Please login now.")
         else:
-            st.error(response.json().get("detail", "Registration failed"))
+            st.error(get_error_message(response, "Registration failed"))
 
 
 def show_authority_login():
@@ -278,7 +280,7 @@ def show_authority_login():
             st.success("Login successful")
             authority_dashboard(st.session_state.authority_token)
         else:
-            st.error(response.json().get("detail", "Login failed"))
+            st.error(get_error_message(response, "Login failed"))
 
 
 def authority_dashboard(token):
