@@ -3,6 +3,8 @@ uvicorn
 psycopg[binary]
 python-dotenv
 passlib[bcrypt]
+
+bcrypt==4.0.1
 python-jose
 pydantic[email]
 requests
