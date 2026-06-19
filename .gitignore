@@ -1,0 +1,9 @@
+.env
+backend/.env
+.venv/
+backend/.venv/
+__pycache__/
+*.pyc
+
+model/saved_models/
+model/results/
