@@ -145,11 +145,12 @@ def show_citizen_login():
 
 def citizen_dashboard():
     st.subheader("Citizen Dashboard")
+
     if st.button("Logout", key="citizen_logout"):
-     st.session_state.citizen_logged_in = False
-     st.session_state.citizen_token = None
-     st.session_state.citizen_dashboard_option = None
-     st.rerun()
+        st.session_state.citizen_logged_in = False
+        st.session_state.citizen_token = None
+        st.session_state.citizen_dashboard_option = None
+        st.rerun()
 
     col1, col2 = st.columns(2)
 
@@ -175,27 +176,48 @@ def citizen_dashboard():
                 st.error("Please enter complaint description and location")
                 return
 
-            response = complaint_submission(
-                content,
-                location,
-                st.session_state.citizen_token
-            )
+            with st.spinner("Submitting complaint and detecting department..."):
+                response = complaint_submission(
+                    content,
+                    location,
+                    st.session_state.citizen_token
+                )
 
             if response.status_code == 200:
+                data = response.json()
+
                 st.success("Complaint submitted successfully")
-                st.json(response.json())
+
+                col1, col2, col3 = st.columns(3)
+
+                with col1:
+                    st.metric("Complaint ID", data["complaint_id"])
+
+                with col2:
+                    st.metric("Department", data["department"])
+
+                with col3:
+                    st.metric("Urgency", data["urgency"])
+
+                st.info(f"Current status: {data['status']}")
             else:
                 st.error(get_error_message(response, "Complaint submission failed"))
+
     elif st.session_state.citizen_dashboard_option == "my_complaints":
         response = get_my_complaints(st.session_state.citizen_token)
 
         if response.status_code == 200:
             complaints = response.json()["complaints"]
 
+            if not complaints:
+                st.info("You have not submitted any complaints yet.")
+
             for complaint in complaints:
                 st.write("Complaint ID:", complaint["id"])
                 st.write("Content:", complaint["content"])
                 st.write("Location:", complaint["location"])
+                st.write("Department:", complaint["department"])
+                st.write("Urgency:", complaint["urgency"])
                 st.write("Status:", complaint["status"])
                 st.write("Created At:", complaint["created_at"])
                 st.divider()
@@ -291,8 +313,8 @@ def authority_dashboard(token):
      st.session_state.transfer_complaint_id = None
      st.rerun()
 
-    analytics_response = get_authority_analytics(token)
-
+    with st.spinner("Loading department analytics..."):
+     analytics_response = get_authority_analytics(token)
     if analytics_response.status_code == 200:
         analytics = analytics_response.json()
 
@@ -326,12 +348,18 @@ def authority_dashboard(token):
         ["normal", "urgent", "critical"]
     )
 
-    response = get_authority_complaints(token, urgency)
+    with st.spinner("Loading complaints..."):
+     response = get_authority_complaints(token, urgency)
 
-    if response.status_code == 200:
-        complaints = response.json()
+    
+    
+     if response.status_code == 200:
+      complaints = response.json()
 
-        for complaint in complaints:
+    if not complaints:
+        st.info("No complaints found for this urgency.")
+
+    for complaint in complaints:
             st.write("Complaint ID:", complaint["id"])
 
             if st.button("Transfer Department", key=f"show_transfer_{complaint['id']}"):
