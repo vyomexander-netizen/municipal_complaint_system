@@ -106,16 +106,16 @@ def show_citizen_register():
 
     if st.button("Register"):
         if not username.strip() or not email.strip() or not password.strip():
-            st.error("Please fill all fields")
+            st.warning("Please fill all fields")
             return
 
-        response = citizen_register(username, email, password)
+        with st.spinner("Creating your account..."):
+            response = citizen_register(username, email, password)
 
         if response.status_code == 200:
             st.success("Registration successful. Please login now.")
         else:
-            st.error(get_error_message(response, "Registration failed"))
-
+            st.warning(get_error_message(response, "Registration failed. Please try again."))
 
 def show_citizen_login():
     if st.session_state.get("citizen_logged_in"):
@@ -129,10 +129,11 @@ def show_citizen_login():
 
     if st.button("login"):
         if not email.strip() or not password.strip():
-            st.error("Please enter email and password")
+            st.warning("Please enter email and password")
             return
 
-        response = citizen_login(email, password)
+        with st.spinner("Logging you in..."):
+            response = citizen_login(email, password)
 
         if response.status_code == 200:
             data = response.json()
@@ -141,7 +142,8 @@ def show_citizen_login():
             st.success("Login successful")
             citizen_dashboard()
         else:
-            st.error(get_error_message(response, "Login failed"))
+            st.warning(get_error_message(response, "Login failed. Please check your details."))
+
 
 def citizen_dashboard():
     st.subheader("Citizen Dashboard")
@@ -173,10 +175,10 @@ def citizen_dashboard():
 
         if st.button("Submit"):
             if not content.strip() or not location.strip():
-                st.error("Please enter complaint description and location")
+                st.warning("Please enter complaint description and location")
                 return
 
-            with st.spinner("Submitting complaint and detecting department..."):
+            with st.spinner("Submitting your complaint..."):
                 response = complaint_submission(
                     content,
                     location,
@@ -187,30 +189,20 @@ def citizen_dashboard():
                 data = response.json()
 
                 st.success("Complaint submitted successfully")
-
-                col1, col2, col3 = st.columns(3)
-
-                with col1:
-                    st.metric("Complaint ID", data["complaint_id"])
-
-                with col2:
-                    st.metric("Department", data["department"])
-
-                with col3:
-                    st.metric("Urgency", data["urgency"])
-
-                st.info(f"Current status: {data['status']}")
+                st.info(f"Complaint ID: {data['complaint_id']}")
             else:
-                st.error(get_error_message(response, "Complaint submission failed"))
+                st.warning(get_error_message(response, "Complaint submission failed. Please try again."))
 
     elif st.session_state.citizen_dashboard_option == "my_complaints":
-        response = get_my_complaints(st.session_state.citizen_token)
+        with st.spinner("Loading your complaints..."):
+            response = get_my_complaints(st.session_state.citizen_token)
 
         if response.status_code == 200:
             complaints = response.json()["complaints"]
 
             if not complaints:
                 st.info("You have not submitted any complaints yet.")
+                return
 
             for complaint in complaints:
                 st.write("Complaint ID:", complaint["id"])
@@ -222,7 +214,7 @@ def citizen_dashboard():
                 st.write("Created At:", complaint["created_at"])
                 st.divider()
         else:
-            st.error("Could not fetch complaints")
+            st.warning("We could not load your complaints right now. Please try again.")
 
 
 def show_authority_register():
@@ -260,13 +252,14 @@ def show_authority_register():
             st.error("Please fill all fields")
             return
 
-        response = authority_register(
-    username,
-    email,
-    password,
-    department,
-    security_code
-)
+        with st.spinner("Creating authority account..."):
+         response = authority_register(
+        username,
+        email,
+        password,
+        department,
+        security_code
+    )
 
         if response.status_code == 200:
             st.success("Registration successful. Please login now.")
@@ -292,8 +285,8 @@ def show_authority_login():
         if not email.strip() or not password.strip():
             st.error("Please enter email and password")
             return
-
-        response = authority_login(email, password)
+        with st.spinner("Logging you in..."):
+         response = authority_login(email, password)
 
         if response.status_code == 200:
             data = response.json()
@@ -373,7 +366,8 @@ def authority_dashboard(token):
                 )
 
                 if st.button("Confirm Transfer", key=f"confirm_transfer_{complaint['id']}"):
-                    transfer_response = update_complaint_department(
+                    with st.spinner("Transferring complaint..."):
+                     transfer_response = update_complaint_department(
                         token,
                         complaint["id"],
                         new_department
@@ -398,7 +392,8 @@ def authority_dashboard(token):
             )
 
             if st.button("Update", key=f"update_{complaint['id']}"):
-                update_response = update_complaint_status(
+                with st.spinner("Updating status..."):
+                 update_response = update_complaint_status(
                     token,
                     complaint["id"],
                     new_status
