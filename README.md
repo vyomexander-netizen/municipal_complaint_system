@@ -141,25 +141,20 @@ Install PyTorch using the command recommended for your system at
 pip install -r requirements.txt
 ```
 
-### 4. Configure environment variables
+### 4. Configure the application
 
-Create a `.env` file in the project root:
+The backend requires private configuration for:
 
-```env
-DATABASE_URL=postgresql://postgres:password@localhost:5432/municipal
-SECRET_KEY=replace-with-a-long-random-secret
+- PostgreSQL database access
+- JWT signing
+- Department and urgency model locations
+- Authority registration
 
-DEPARTMENT_MODEL_ID=your-hugging-face-department-model
-URGENCY_MODEL_ID=your-hugging-face-urgency-model
+Store all private values in a local `.env` file. The `.env` file is excluded
+through `.gitignore` and must never be committed.
 
-ROADS_AUTHORITY_CODE=roads-secret-code
-WATER_AUTHORITY_CODE=water-secret-code
-WASTE_AUTHORITY_CODE=waste-secret-code
-ELECTRICITY_AUTHORITY_CODE=electricity-secret-code
-PUBLIC_SAFETY_AUTHORITY_CODE=public-safety-secret-code
-```
-
-Do not commit the `.env` file or real authority registration codes.
+For security, this README intentionally does not include connection strings,
+secret names, registration codes, access tokens, or example credentials.
 
 ### 5. Start the backend
 
@@ -206,11 +201,8 @@ streamlit run frontend/app.py
 | PUT | `/updatedepartment` | Authority | Transfer a complaint |
 | GET | `/authorityanalytics` | Authority | View department analytics |
 
-Protected routes require the following header:
-
-```http
-Authorization: Bearer <access_token>
-```
+Protected routes require a valid JWT received after login. Never publish or
+commit an access token.
 
 ## Training the Models
 
@@ -242,6 +234,15 @@ docker run --env-file .env -p 7860:7860 municipal-complaint-backend
 ```
 
 The container serves the API on `http://localhost:7860`.
+
+## Security Notes
+
+- Never commit `.env` files, database URLs, passwords, JWT secrets, authority
+  registration codes, access tokens, or real user information.
+- Use separate secrets for development and deployment.
+- If a real secret is ever committed, rotate or revoke it immediately. Removing
+  it from the latest README does not remove it from Git history.
+- Review staged changes with `git diff --staged` before every push.
 
 ## Future Improvements
 
